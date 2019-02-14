@@ -16,11 +16,25 @@ spec:
     spec:
       containers:
       - name: client
-        image: {{ .Values.fortioImage }}
+        image: python:3
         args:
-        - load
-        - -qps
-        - "{{ .Values.qps }}"
-        - -t
-        - "0"
-        - http://httpbin:8000/delay/{{ .Values.connectionDuration }}
+        - python
+        - -c
+        - |-
+          import urllib.request
+          from multiprocessing import Process
+          import time
+
+          URL = "http://httpbin:8000/delay/{{ .Values.connectionDuration }}"
+
+          def run_request():
+            start = time.time()
+            try:
+              urllib.request.urlopen(URL)
+            except urllib.error.HTTPError as e:
+              print("%s error in %fs"%(e.code, time.time()-start))
+
+          # Send requests at a steady rate
+          while True:
+            Process(target=run_request).start()
+            time.sleep(1/{{ .Values.qps }})
