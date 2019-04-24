@@ -1,7 +1,9 @@
-# Redis
+# CockroachDB
 
-This test installs an instance of Redis using the [stable/redis](https://github.com/helm/charts/tree/master/stable/redis) Helm chart.
+This test installs an instance of CockroachDB using the [stable/cockroachdb](https://github.com/helm/charts/tree/master/stable/cockroachdb) Helm chart.
 
-The Redis install is generated using `helm template stable/redis --set password=istio --name redis`
+The install is generated using `helm template stable/cockroachdb --name cockroachdb --namespace istio-stability-cockroachdb`
 
-Additionally, a simple redis client is created that repeatedly writes to the master instance, then tries to read that value from the master and slave instance.
+Changes needed to work with Istio:
+* Change cockroachdb-cockroachdb-public to not conflict with cockroachdb-cockroachdb ports.
+* Add ServiceEntry in `istio.yaml`
