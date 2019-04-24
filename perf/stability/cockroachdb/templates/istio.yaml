@@ -1,0 +1,18 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: ServiceEntry
+metadata:
+  name: cockroachdb-serviceentry
+spec:
+  hosts:
+  - cockroachdb-cockroachdb-0.istio-stability-cockroachdb
+  - cockroachdb-cockroachdb-1.istio-stability-cockroachdb
+  - cockroachdb-cockroachdb-2.istio-stability-cockroachdb
+  location: MESH_INTERNAL
+  ports:
+  - number: 26257
+    name: grpc
+    protocol: GRPC
+  - number: 8080
+    name: http
+    protocol: HTTP
+  resolution: DNS
