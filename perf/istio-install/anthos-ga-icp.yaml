@@ -1,0 +1,38 @@
+apiVersion: install.istio.io/v1alpha2
+kind: IstioControlPlane
+metadata:
+  name: istio
+  namespace: istio-operator
+spec:
+  gateways:
+    components:
+      ingressGateway:
+        enabled: true
+        k8s:
+          hpaSpec:
+            minReplicas: 3
+            maxReplicas: 10
+          resources:
+            limits:
+              cpu: 6000m
+              memory: 512Mi
+            requests:
+              cpu: 4000m
+              memory: 512Mi
+
+  values:
+    grafana:
+      enabled: true
+      datasources:
+        datasources.yaml:
+          apiVersion: 1
+          datasources:
+          - name: Prometheus
+            type: prometheus
+            orgId: 1
+            url: http://istio-prometheus.istio-prometheus:9090
+            access: proxy
+            jsonData:
+              timeInterval: 5s
+            editable: true
+            isDefault: true

@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# set -x
+set -x
 # Creates service accounts to associate with a cluster with proper permissions.
 #
 # A control plane service account will also be created for interacting with GKE.
@@ -47,10 +47,10 @@ GCP_SA=${1:-istio-data}
 GCP_CTL_SA=${2:-istio-control}
 
 if [[ -z "$(gcloud beta iam service-accounts --project="${PROJECT_ID}" list --filter=email="${GCP_SA}@${PROJECT_ID}.iam.gserviceaccount.com" --format='csv[no-heading](email)')" ]]; then
-  gc beta iam service-accounts create --quiet "${GCP_SA}" # --display-name 'Istio data plane account'
+  gc beta iam service-accounts create --quiet "${GCP_SA}" --project="${PROJECT_ID}" # --display-name 'Istio data plane account'
 fi
 if [[ -z "$(gcloud beta iam service-accounts --project="${PROJECT_ID}" list --filter=email="${GCP_CTL_SA}@${PROJECT_ID}.iam.gserviceaccount.com" --format='csv[no-heading](email)')" ]]; then
-  gc beta iam service-accounts create --quiet "${GCP_CTL_SA}" #--display-name '"Istio control plane account"'
+  gc beta iam service-accounts create --quiet "${GCP_CTL_SA}" --project="${PROJECT_ID}" #--display-name '"Istio control plane account"'
 fi
 
 function gcloud_get_iam {
