@@ -14,15 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Usage
-# ./setup_istio_operator.sh, install Istio with operator.
-#
-# export OPERATOR_SHA="abcdef" && ./setup_istio_operator.sh.
-# setup Istio with a given operator repo's SHA
-#
-# export OPERATOR_PROFILE="automtls.yaml" && ./setup_istio_operator.sh.
-# using a specific Istio operator profile to install Istio.
-
 set -ex
 
 WD=$(dirname "$0")
@@ -31,39 +22,75 @@ DIRNAME="${WD}/tmp"
 mkdir -p "${DIRNAME}"
 export GO111MODULE=on
 
-# The profile containing IstioControlPlane spec. Overriding this environment
-# variable allow to specify different installation options.
-OPERATOR_SHA=${OPERATOR_SHA-$(cat "${WD}"/istio_operator.sha)}
-OPERATOR_PROFILE=${OPERATOR_PROFILE:-default.yaml}
-
-ISTIO_OPERATOR_DIR="${DIRNAME}/operator"
-if [[ ! -d "${ISTIO_OPERATOR_DIR}" ]]; then
-  git clone https://github.com/istio/operator.git "$ISTIO_OPERATOR_DIR"
+# Passing a tag, like latest or 1.4-dev
+if [[ -n "${TAG:-}" ]]; then
+  VERSION=$(curl -sL https://gcsweb.istio.io/gcs/istio-build/dev/"${TAG}")
+  OUT_FILE="istio-${VERSION}"
+  RELEASE_URL="https://storage.googleapis.com/istio-build/dev/${VERSION}/istio-${VERSION}-linux.tar.gz"
+# Passing a dev version, like 1.4-alpha.41dee99277dbed4bfb3174dd0448ea941cf117fd
+elif [[ -n "${DEV_VERSION:-}" ]]; then
+  OUT_FILE="istio-${DEV_VERSION}"
+  RELEASE_URL="https://storage.googleapis.com/istio-build/dev/${DEV_VERSION}/istio-${DEV_VERSION}-linux.tar.gz"
+# Passing a version, like 1.4.2
+elif [[ -n "${VERSION:-}" ]]; then
+  OUT_FILE="istio-${VERSION}"
+  RELEASE_URL="https://storage.googleapis.com/istio-prerelease/prerelease/${VERSION}/istio-${VERSION}-linux.tar.gz"
+# Passing a release url, like https://storage.googleapis.com/istio-prerelease/prerelease/1.4.1/istio-1.4.1-linux.tar.gz
+elif [[ -n "${RELEASE_URL:-}" ]]; then
+  OUT_FILE=${OUT_FILE:-"$(basename "${RELEASE_URL}" -linux.tar.gz)"}
+# Passing a gcs url, like gs://istio-build/dev/1.4-alpha.41dee99277dbed4bfb3174dd0448ea941cf117fd
+elif [[ -n "${GCS_URL:-}" ]]; then
+  DOWNLOAD_TYPE=gcs
+  RELEASE_URL="${GCS_URL}"
+  OUT_FILE=${OUT_FILE:-"$(basename "${RELEASE_URL}" -linux.tar.gz)"}
 fi
 
-pushd .
-cd "${ISTIO_OPERATOR_DIR}"
-git fetch
-echo "Checking out operator SHA ${OPERATOR_SHA} ..."
-git checkout "${OPERATOR_SHA}"
-popd
+if [[ -z "${RELEASE_URL:-}" ]]; then
+  echo "Must set on of TAG, VERSION, DEV_VERSION, RELEASE_URL, GCS_URL"
+  exit 2
+fi
 
-defaultNamespace=istio-system
-
-function setup_admin_binding() {
-  kubectl create clusterrolebinding cluster-admin-binding \
-    --clusterrole=cluster-admin \
-    --user="$(gcloud config get-value core/account)" || true
+function download_release() {
+  outfile="${DIRNAME}/${OUT_FILE}"
+  if [[ ! -d "${outfile}" ]]; then
+    tmp=$(mktemp -d)
+    if [[ "${DOWNLOAD_TYPE:-}" == gcs ]]; then
+      gsutil cp "${GCS_URL}" "${tmp}/out.tar.gz"
+      tar xvf "${tmp}/out.tar.gz" -C "${DIRNAME}"
+    else
+      curl -fJLs -o "${tmp}/out.tar.gz" "${RELEASE_URL}"
+      tar xvf "${tmp}/out.tar.gz" -C "${DIRNAME}"
+    fi
+  else
+    echo "${outfile} already exists, skipping download"
+  fi
 }
 
-function install_istio() {
-    local CR_FILENAME="${WD}/istioctl_profiles/${OPERATOR_PROFILE}"
-    pushd "${ISTIO_OPERATOR_DIR}"
-    go run ./cmd/mesh.go manifest apply -f "${CR_FILENAME}" --force=true --set meshConfig.rootNamespace=${defaultNamespace}
-    popd
-    echo "installation is done"
+function install_operator() {
+  release=${1:?release folder}
+  kubectl apply -k "${release}/install/kubernetes/operator/deploy"
+  kubectl wait --for=condition=Available deployment --all --timeout=120s -n istio-operator
+  kubectl apply -f anthos-ga-icp.yaml
 }
 
-setup_admin_binding
+function install_istioctl() {
+  release=${1:?release folder}
+  shift
+  "${release}/bin/istioctl" manifest apply --skip-confirmation --wait "${@}"
+}
 
-install_istio
+function install_gateways() {
+  local domain=${DNS_DOMAIN:-howardjohn.qualistio.org}
+  helm template --set domain="${domain}" base | kubectl -n istio-system apply -f -
+}
+
+function install_prom_op() {
+  "$WD/setup_prometheus.sh" "${DIRNAME}"
+}
+
+download_release
+#install_operator "${DIRNAME}/${OUT_FILE}"
+install_istioctl "${DIRNAME}/${OUT_FILE}" "${@}"
+
+install_prom_op
+install_gateways
