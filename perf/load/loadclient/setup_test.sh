@@ -24,18 +24,10 @@ set -ex
 NAMESPACE=${1:?"namespace"}
 NAMEPREFIX=${2:?"prefix name for service. typically svc-"}
 
-HTTPS=${HTTPS:-"false"}
 
 # Additional customization option for load client, e.g. "--set qps=200"
 # LOADCLIENT_EXTRA_HELM_FLAGS=${LOADCLIENT_EXTRA_HELM_FLAGS:-""}
 
-if [[ -z "${GATEWAY_URL}" ]];then
-SYSTEM_GATEWAY_URL=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}' || true)
-INGRESS_GATEWAY_URL=$(kubectl -n istio-ingress get service istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}' || true)
-GATEWAY_URL=${SYSTEM_GATEWAY_URL:-$INGRESS_GATEWAY_URL}
-fi
-
-SERVICEHOST="${NAMEPREFIX}0.local"
 
 function run_test() {
   YAML=$(mktemp).yml
@@ -43,9 +35,9 @@ function run_test() {
   helm -n ${NAMESPACE} template \
 	  --set serviceHost="${SERVICEHOST}" \
     --set Namespace="${NAMESPACE}" \
-    --set ingress="${GATEWAY_URL}" \
+    --set ingress="${NAMEPREFIX}0.${NAMESPACE}:8080" \
     --set domain="${DNS_DOMAIN}" \
-    --set https="${HTTPS}" \
+    --set https="false" \
     ${LOADCLIENT_EXTRA_HELM_FLAGS} \
           . > "${YAML}"
   echo "Wrote ${YAML}"
