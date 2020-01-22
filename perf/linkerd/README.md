@@ -5,6 +5,8 @@
 * kubectl delete namespace service-graph{01..15}
 * kubectl scale deployment client --replicas 0
 
+GKE v1.16.0-gke.20. 12 nodes, 32core
+
 # Linkerd
 
 ```
@@ -38,3 +40,16 @@ qps p50/p90/p99
 -c 64 -qps 100: 99.8 57/80/170
 -c 64 -qps 1000: 998.9 49/68/172
 -c 64 -qps 0: 1175.7
+
+# Istio
+
+Startup: https://snapshot.raintank.io/dashboard/snapshot/Q2d4HQ28mkkx0y3uc8WZpFA3y3L3qR0z?orgId=2
+Shutdown: https://snapshot.raintank.io/dashboard/snapshot/yDoM2OqbIzo4lG967wfAMYhmWS4IFCRZ?orgId=2
+
+
+qps p50/p90/p99
+-c 2 -qps 100: 100 5/21/34
+-c 2 -qps 1000: 254.7
+-c 64 -qps 100: 99.8 22/39/239
+-c 64 -qps 1000: 998.9 20/32/98
+-c 64 -qps 0: 3300

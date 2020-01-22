@@ -55,7 +55,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(container_memory_usage_bytes{namespace=~\"service-graph..\", container=\"istio-system-proxy\"}) by (namespace)",
+          "expr": "sum(container_memory_usage_bytes{namespace=~\"service-graph..\", container=\"linkerd-proxy\"}) by (namespace)",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{namespace}}",
@@ -140,7 +140,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(irate(container_cpu_usage_seconds_total{namespace=~\"service-graph..\", container=\"istio-system-proxy\"}[1m])) by (namespace)",
+          "expr": "sum(irate(container_cpu_usage_seconds_total{namespace=~\"service-graph..\", container=\"linkerd-proxy\"}[1m])) by (namespace)",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{namespace}}",
@@ -225,7 +225,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(container_memory_usage_bytes{namespace=~\"istio-system\", container=\"\", pod!~\"prometheus.*\", pod!~\"grafana.*\"}) by (pod)",
+          "expr": "sum(container_memory_usage_bytes{namespace=~\"linkerd\", container=\"\", pod!~\"linkerd-prometheus.*\", pod!~\"linkerd-grafana.*\"}) by (pod)",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{pod}}",
@@ -310,7 +310,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "irate(container_cpu_usage_seconds_total{namespace=\"istio-system\", container=\"\", pod!~\"prometheus.*\", pod!~\"grafana.*\"}[1m])",
+          "expr": "irate(container_cpu_usage_seconds_total{namespace=\"linkerd\", container=\"\", pod!~\"linkerd-prometheus.*\", pod!~\"linkerd-grafana.*\"}[1m])",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{pod}}",
