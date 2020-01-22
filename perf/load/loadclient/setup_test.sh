@@ -46,6 +46,7 @@ function run_test() {
     kubectl create ns "${NAMESPACE}" || true
     kubectl label namespace "${NAMESPACE}" istio-injection=enabled --overwrite
     kubectl label namespace "${NAMESPACE}" istio-env=istio-control --overwrite
+    kubectl annotate namespace "${NAMESPACE}" linkerd.io/inject=enabled --overwrite
     sleep 5
     kubectl -n "${NAMESPACE}" apply -f "${YAML}"
   else

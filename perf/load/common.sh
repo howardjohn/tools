@@ -36,6 +36,7 @@ function run_test() {
   kubectl create ns "${ns}" || true
   kubectl label namespace "${ns}" istio-injection=enabled --overwrite
   kubectl label namespace "${ns}" istio-env=istio-control --overwrite
+    kubectl annotate namespace "${ns}" linkerd.io/inject=enabled --overwrite
 
    if [[ -z "${DELETE}" ]];then
     sleep 3
@@ -62,7 +63,7 @@ function start_servicegraphs() {
       ${CMD} run_test "${ns}" "${prefix}"
     fi
 
-    sleep 30
+    sleep 5
   }
 }
 
