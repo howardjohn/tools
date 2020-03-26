@@ -61,4 +61,4 @@ function run_test() {
   fi
 }
 
-run_test
+# run_test

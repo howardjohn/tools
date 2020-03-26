@@ -39,9 +39,10 @@ function run_test() {
           . > "${YAML}"
   echo "Wrote ${YAML}"
 
+  (cd ../istio-install; bash -c "${INSTALL_CMD:-"echo skipping install of Istio"} --set revision=${ns}")
+
   kubectl create ns "${ns}" || true
-  kubectl label namespace "${ns}" istio-injection=enabled --overwrite
-  kubectl label namespace "${ns}" istio-env=istio-control --overwrite
+  kubectl label namespace "${ns}" istio.io/rev="${ns}" --overwrite=true
 
    if [[ -z "${DELETE}" ]];then
     sleep 3
