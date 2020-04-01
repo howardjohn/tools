@@ -66,13 +66,6 @@ function download_release() {
   fi
 }
 
-function install_operator() {
-  release=${1:?release folder}
-  kubectl apply -k "${release}/install/kubernetes/operator/deploy"
-  kubectl wait --for=condition=Available deployment --all --timeout=120s -n istio-operator
-  kubectl apply -f anthos-ga-icp.yaml
-}
-
 function install_istioctl() {
   release=${1:?release folder}
   shift
@@ -81,7 +74,7 @@ function install_istioctl() {
 
 function install_gateways() {
   local domain=${DNS_DOMAIN:-howardjohn.qualistio.org}
-  helm template --set domain="${domain}" base | kubectl -n istio-system apply -f -
+  helm template --set domain="${domain}" "${WD}/base" | kubectl -n istio-system apply -f -
 }
 
 function install_prom_op() {
@@ -89,8 +82,9 @@ function install_prom_op() {
 }
 
 download_release
-#install_operator "${DIRNAME}/${OUT_FILE}"
 install_istioctl "${DIRNAME}/${OUT_FILE}" "${@}"
 
-install_prom_op
-install_gateways
+if [[ -z "${SKIP_EXTRAS:-}" ]]; then
+  install_prom_op
+  install_gateways
+fi
