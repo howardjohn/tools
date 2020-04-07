@@ -38,6 +38,7 @@ function start_servicegraphs() {
       ns=$(printf 'service-graph%.2d' $ii)
       prefix=$(printf 'svc%.2d-' $ii)
       export INJECTION_LABEL="istio.io/rev=${ns}"
+      kubectl label namespace $ns --overwrite istio-injection-
       SKIP_EXTRAS=true "${WD}/../istio-install/setup_istio_operator.sh" -f revision.yaml --set revision="${ns}"
       ${CMD} run_test "${ns}" "${prefix}"
       ${CMD} "${WD}/loadclient/setup_test.sh" "${ns}" "${prefix}"

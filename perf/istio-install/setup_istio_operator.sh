@@ -26,23 +26,23 @@ export GO111MODULE=on
 if [[ -n "${TAG:-}" ]]; then
   VERSION=$(curl -sL https://gcsweb.istio.io/gcs/istio-build/dev/"${TAG}")
   OUT_FILE="istio-${VERSION}"
-  RELEASE_URL="https://storage.googleapis.com/istio-build/dev/${VERSION}/istio-${VERSION}-linux.tar.gz"
+  RELEASE_URL="https://storage.googleapis.com/istio-build/dev/${VERSION}/istio-${VERSION}-linux-amd64.tar.gz"
 # Passing a dev version, like 1.4-alpha.41dee99277dbed4bfb3174dd0448ea941cf117fd
 elif [[ -n "${DEV_VERSION:-}" ]]; then
   OUT_FILE="istio-${DEV_VERSION}"
-  RELEASE_URL="https://storage.googleapis.com/istio-build/dev/${DEV_VERSION}/istio-${DEV_VERSION}-linux.tar.gz"
+  RELEASE_URL="https://storage.googleapis.com/istio-build/dev/${DEV_VERSION}/istio-${DEV_VERSION}-linux-amd64.tar.gz"
 # Passing a version, like 1.4.2
 elif [[ -n "${VERSION:-}" ]]; then
   OUT_FILE="istio-${VERSION}"
-  RELEASE_URL="https://storage.googleapis.com/istio-prerelease/prerelease/${VERSION}/istio-${VERSION}-linux.tar.gz"
-# Passing a release url, like https://storage.googleapis.com/istio-prerelease/prerelease/1.4.1/istio-1.4.1-linux.tar.gz
+  RELEASE_URL="https://storage.googleapis.com/istio-prerelease/prerelease/${VERSION}/istio-${VERSION}-linux-amd64.tar.gz"
+# Passing a release url, like https://storage.googleapis.com/istio-prerelease/prerelease/1.4.1/istio-1.4.1-linux-amd64.tar.gz
 elif [[ -n "${RELEASE_URL:-}" ]]; then
-  OUT_FILE=${OUT_FILE:-"$(basename "${RELEASE_URL}" -linux.tar.gz)"}
+  OUT_FILE=${OUT_FILE:-"$(basename "${RELEASE_URL}" -linux-amd64.tar.gz)"}
 # Passing a gcs url, like gs://istio-build/dev/1.4-alpha.41dee99277dbed4bfb3174dd0448ea941cf117fd
 elif [[ -n "${GCS_URL:-}" ]]; then
   DOWNLOAD_TYPE=gcs
   RELEASE_URL="${GCS_URL}"
-  OUT_FILE=${OUT_FILE:-"$(basename "${RELEASE_URL}" -linux.tar.gz)"}
+  OUT_FILE=${OUT_FILE:-"$(basename "${RELEASE_URL}" -linux-amd64.tar.gz)"}
 fi
 
 if [[ -z "${RELEASE_URL:-}" ]]; then
