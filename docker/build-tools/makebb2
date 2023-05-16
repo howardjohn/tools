@@ -1,0 +1,41 @@
+#!/bin/bash
+
+set -eu
+
+cd `mktemp -d`
+
+echo "running in $PWD"
+
+go mod init temp
+
+cat <<EOF > tools.go
+//go:build tools
+
+package tools
+
+import (
+EOF
+
+unversioned=()
+commands=()
+for import in $@; do
+  u="$(cut -d@ -f1 <<< $import)"
+  unversioned+=("$u")
+  commands+=("$(basename $u)")
+done
+
+for import in "${unversioned[@]}"; do
+  echo -e "\t\"$import\"">> tools.go
+done
+echo ")" >> tools.go
+
+for import in $@; do
+  go get "${import}"
+done
+go mod tidy
+
+makebb "${unversioned[@]}"
+
+for c in "${commands[@]}"; do
+  ln -s bb "$c"
+done

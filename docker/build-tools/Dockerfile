@@ -131,6 +131,7 @@ RUN set -eux; \
     chmod +x ${OUTDIR}/usr/bin/protoc-gen-validate-go
 
 # Build and install a bunch of Go tools
+RUN go install -ldflags="-s -w" github.com/u-root/gobusybox/src/cmd/makebb@latest
 RUN go install -ldflags="-s -w" google.golang.org/protobuf/cmd/protoc-gen-go@${GOLANG_PROTOBUF_VERSION}
 RUN go install -ldflags="-s -w" google.golang.org/grpc/cmd/protoc-gen-go-grpc@${GOLANG_GRPC_PROTOBUF_VERSION}
 RUN go install -ldflags="-s -w" github.com/nilslice/protolock/cmd/protolock@${PROTOLOCK_VERSION}
