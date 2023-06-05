@@ -2,6 +2,8 @@
 
 set -eu
 
+DST="$1"
+shift
 cd `mktemp -d`
 
 echo "running in $PWD"
@@ -35,7 +37,8 @@ done
 go mod tidy
 
 makebb "${unversioned[@]}"
-
+cp bb "$DST"
 for c in "${commands[@]}"; do
   ln -s bb "$c"
 done
+echo "Done! $PWD"

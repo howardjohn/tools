@@ -131,42 +131,42 @@ RUN set -eux; \
     chmod +x ${OUTDIR}/usr/bin/protoc-gen-validate-go
 
 # Build and install a bunch of Go tools
+COPY makebb2 .
 RUN go install -ldflags="-s -w" github.com/u-root/gobusybox/src/cmd/makebb@latest
-RUN go install -ldflags="-s -w" google.golang.org/protobuf/cmd/protoc-gen-go@${GOLANG_PROTOBUF_VERSION}
-RUN go install -ldflags="-s -w" google.golang.org/grpc/cmd/protoc-gen-go-grpc@${GOLANG_GRPC_PROTOBUF_VERSION}
-RUN go install -ldflags="-s -w" github.com/nilslice/protolock/cmd/protolock@${PROTOLOCK_VERSION}
-RUN go install -ldflags="-s -w" golang.org/x/tools/cmd/goimports@${GOIMPORTS_VERSION}
-RUN go install -ldflags="-s -w" github.com/golangci/golangci-lint/cmd/golangci-lint@${GOLANGCI_LINT_VERSION}
-RUN go install -ldflags="-s -w" github.com/go-bindata/go-bindata/go-bindata@${GO_BINDATA_VERSION}
 RUN go install -ldflags="-s -w" github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway@${PROTOC_GEN_GRPC_GATEWAY_VERSION}
-RUN go install -ldflags="-s -w" github.com/google/go-jsonnet/cmd/jsonnet@${JSONNET_VERSION}
-RUN go install -ldflags="-s -w" github.com/jsonnet-bundler/jsonnet-bundler/cmd/jb@${JB_VERSION}
-RUN go install -ldflags="-s -w" github.com/istio/go-junit-report@${GO_JUNIT_REPORT_VERSION}
-RUN go install -ldflags="-s -w" sigs.k8s.io/bom/cmd/bom@${BOM_VERSION}
-RUN go install -ldflags="-s -w" sigs.k8s.io/kind@${KIND_VERSION}
-RUN go install -ldflags="-s -w" github.com/wadey/gocovmerge@${GOCOVMERGE_VERSION}
-RUN go install -ldflags="-s -w" github.com/imsky/junit-merger/src/junit-merger@${JUNIT_MERGER_VERSION}
-RUN go install -ldflags="-s -w" golang.org/x/perf/cmd/benchstat@${BENCHSTAT_VERSION}
-RUN go install -ldflags="-s -w" github.com/google/go-containerregistry/cmd/crane@${CRANE_VERSION}
-
-# Install latest version of Istio-owned tools in this release
-RUN go install -ldflags="-s -w" istio.io/tools/cmd/protoc-gen-docs@${ISTIO_TOOLS_SHA}
-RUN go install -ldflags="-s -w" istio.io/tools/cmd/annotations_prep@${ISTIO_TOOLS_SHA}
-RUN go install -ldflags="-s -w" istio.io/tools/cmd/cue-gen@${ISTIO_TOOLS_SHA}
-RUN go install -ldflags="-s -w" istio.io/tools/cmd/envvarlinter@${ISTIO_TOOLS_SHA}
-RUN go install -ldflags="-s -w" istio.io/tools/cmd/testlinter@${ISTIO_TOOLS_SHA}
-RUN go install -ldflags="-s -w" istio.io/tools/cmd/protoc-gen-golang-deepcopy@${ISTIO_TOOLS_SHA}
-RUN go install -ldflags="-s -w" istio.io/tools/cmd/protoc-gen-golang-jsonshim@${ISTIO_TOOLS_SHA}
-RUN go install -ldflags="-s -w" istio.io/tools/cmd/kubetype-gen@${ISTIO_TOOLS_SHA}
 RUN go install -ldflags="-s -w" istio.io/tools/cmd/license-lint@${ISTIO_TOOLS_SHA}
-RUN go install -ldflags="-s -w" istio.io/tools/cmd/gen-release-notes@${ISTIO_TOOLS_SHA}
+RUN go install -ldflags="-s -w" github.com/golangci/golangci-lint/cmd/golangci-lint@${GOLANGCI_LINT_VERSION}
 RUN go install -ldflags="-s -w" k8s.io/code-generator/cmd/applyconfiguration-gen@kubernetes-${K8S_CODE_GENERATOR_VERSION}
-RUN go install -ldflags="-s -w" k8s.io/code-generator/cmd/defaulter-gen@kubernetes-${K8S_CODE_GENERATOR_VERSION}
-RUN go install -ldflags="-s -w" k8s.io/code-generator/cmd/client-gen@kubernetes-${K8S_CODE_GENERATOR_VERSION}
-RUN go install -ldflags="-s -w" k8s.io/code-generator/cmd/lister-gen@kubernetes-${K8S_CODE_GENERATOR_VERSION}
-RUN go install -ldflags="-s -w" k8s.io/code-generator/cmd/informer-gen@kubernetes-${K8S_CODE_GENERATOR_VERSION}
-RUN go install -ldflags="-s -w" k8s.io/code-generator/cmd/deepcopy-gen@kubernetes-${K8S_CODE_GENERATOR_VERSION}
-RUN go install -ldflags="-s -w" k8s.io/code-generator/cmd/go-to-protobuf@kubernetes-${K8S_CODE_GENERATOR_VERSION}
+
+RUN env PATH=/tmp/go/bin:$PATH ./makebb2 /tmp/go/bin \
+  google.golang.org/protobuf/cmd/protoc-gen-go@${GOLANG_PROTOBUF_VERSION} \
+  google.golang.org/grpc/cmd/protoc-gen-go-grpc@${GOLANG_GRPC_PROTOBUF_VERSION} \
+  github.com/nilslice/protolock/cmd/protolock@${PROTOLOCK_VERSION} \
+  golang.org/x/tools/cmd/goimports@${GOIMPORTS_VERSION} \
+  github.com/go-bindata/go-bindata/go-bindata@${GO_BINDATA_VERSION} \
+  github.com/google/go-jsonnet/cmd/jsonnet@${JSONNET_VERSION} \
+  github.com/jsonnet-bundler/jsonnet-bundler/cmd/jb@${JB_VERSION} \
+  github.com/istio/go-junit-report@${GO_JUNIT_REPORT_VERSION} \
+  sigs.k8s.io/bom/cmd/bom@${BOM_VERSION} \
+  sigs.k8s.io/kind@${KIND_VERSION} \
+  github.com/wadey/gocovmerge@${GOCOVMERGE_VERSION} \
+  github.com/imsky/junit-merger/src/junit-merger@${JUNIT_MERGER_VERSION} \
+  golang.org/x/perf/cmd/benchstat@${BENCHSTAT_VERSION} \
+  github.com/google/go-containerregistry/cmd/crane@${CRANE_VERSION} \
+  istio.io/tools/cmd/protoc-gen-docs@${ISTIO_TOOLS_SHA} \
+  istio.io/tools/cmd/annotations_prep@${ISTIO_TOOLS_SHA} \
+  istio.io/tools/cmd/envvarlinter@${ISTIO_TOOLS_SHA} \
+  istio.io/tools/cmd/testlinter@${ISTIO_TOOLS_SHA} \
+  istio.io/tools/cmd/protoc-gen-golang-deepcopy@${ISTIO_TOOLS_SHA} \
+  istio.io/tools/cmd/protoc-gen-golang-jsonshim@${ISTIO_TOOLS_SHA} \
+  istio.io/tools/cmd/kubetype-gen@${ISTIO_TOOLS_SHA} \
+  istio.io/tools/cmd/gen-release-notes@${ISTIO_TOOLS_SHA} \
+  k8s.io/code-generator/cmd/defaulter-gen@kubernetes-${K8S_CODE_GENERATOR_VERSION} \
+  k8s.io/code-generator/cmd/client-gen@kubernetes-${K8S_CODE_GENERATOR_VERSION} \
+  k8s.io/code-generator/cmd/lister-gen@kubernetes-${K8S_CODE_GENERATOR_VERSION} \
+  k8s.io/code-generator/cmd/informer-gen@kubernetes-${K8S_CODE_GENERATOR_VERSION} \
+  k8s.io/code-generator/cmd/deepcopy-gen@kubernetes-${K8S_CODE_GENERATOR_VERSION} \
+  k8s.io/code-generator/cmd/go-to-protobuf@kubernetes-${K8S_CODE_GENERATOR_VERSION}
 
 # Install istio/test-infra tools
 RUN go install sigs.k8s.io/kubetest2@${KUBETEST2_VERSION}
