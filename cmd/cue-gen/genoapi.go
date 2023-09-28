@@ -77,6 +77,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
@@ -93,9 +94,13 @@ import (
 	"cuelang.org/go/cue/cuecontext"
 	"cuelang.org/go/cue/errors"
 	"cuelang.org/go/cue/load"
+	cuejson "cuelang.org/go/encoding/json"
 	"cuelang.org/go/encoding/openapi"
 	"cuelang.org/go/encoding/protobuf"
 	"golang.org/x/exp/slices"
+	apiext "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	crdmarkers "sigs.k8s.io/controller-tools/pkg/crd/markers"
+	"sigs.k8s.io/controller-tools/pkg/markers"
 	"sigs.k8s.io/yaml"
 )
 
@@ -413,6 +418,7 @@ func (x *builder) genOpenAPI(name string, inst cue.Value) (cue.Value, error) {
 		}
 		return x.reference(val.BuildInstance().ImportPath, labels)
 	}
+	cfg.AdditionalSchemasFunc = processSchemas
 	cfg.DescriptionFunc = func(v cue.Value) string {
 		n := strings.Split(inst.BuildInstance().ImportPath, "/")
 		l, _ := v.Label()
@@ -598,4 +604,87 @@ func fatal(err error, msg string) {
 	errors.Print(os.Stderr, err, nil)
 	_ = log.Output(2, msg)
 	os.Exit(1)
+}
+
+var markerRegistry = func() *markers.Registry {
+	registry := &markers.Registry{}
+	crdmarkers.Register(registry)
+	return registry
+}()
+
+func processSchemas(v cue.Value) map[string]ast.Expr {
+	// Super hacky. kubebuilder wants to take an existing json schema.
+	// Cue gives us a cue value.
+	// We give kubebuilder an empty schema, but apply some dummy info there to make it work enough.
+	js := &apiext.JSONSchemaProps{}
+	js.Type = cueType(v)
+	matched := false
+	for _, d := range v.Doc() {
+		for _, line := range strings.Split(d.Text(), "\n") {
+			if !strings.Contains(line, "kubebuilder:validation") {
+				continue
+			}
+			def := markerRegistry.Lookup(line, markers.DescribesType)
+			if def == nil {
+				log.Fatalf("unknown validation: %v", line)
+			}
+			matched = true
+			a, err := def.Parse(line)
+			if err != nil {
+				log.Fatalf("failed to parse: %v", line)
+			}
+			if err := a.(SchemaApplier).ApplyToSchema(js); err != nil {
+				log.Fatalf("failed to apply schema: %v", err)
+			}
+
+		}
+	}
+	if !matched {
+		return nil
+	}
+	js.Type = "" // Back out our custom type
+	r := translateSchema(js)
+	return r
+}
+
+func cueType(v cue.Value) string {
+	k := v.IncompleteKind()
+	switch k {
+	case cue.BoolKind:
+		return "boolean"
+	case cue.FloatKind, cue.NumberKind:
+		return "number"
+	case cue.IntKind:
+		return "integer"
+	case cue.BytesKind:
+		return "string"
+	case cue.StringKind:
+		return "string"
+	case cue.StructKind:
+		return "object"
+	case cue.ListKind:
+		return "array"
+	}
+	return ""
+}
+
+func translateSchema(js *apiext.JSONSchemaProps) map[string]ast.Expr {
+	rawb, _ := json.Marshal(js)
+
+	m1 := map[string]json.RawMessage{}
+	res := map[string]ast.Expr{}
+	json.Unmarshal(rawb, &m1)
+	for k, v := range m1 {
+		b, _ := v.MarshalJSON()
+		exp, err := cuejson.Extract("", b)
+		if err != nil {
+			log.Fatalf("failed to extrat: %v", err)
+		}
+		res[k] = exp
+	}
+	return res
+}
+
+type SchemaApplier interface {
+	ApplyToSchema(schema *apiext.JSONSchemaProps) error
 }
