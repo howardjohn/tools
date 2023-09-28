@@ -339,6 +339,11 @@ func (x *builder) genCRD() {
 
 	schemas := map[string]cue.Value{}
 	for _, inst := range all {
+		if !strings.Contains(inst.BuildInstance().ImportPath, "extensions") {
+			continue
+		}
+		//y, _ := yaml.Marshal(inst.Value())
+		log.Printf("%#v", inst.Value())
 		items, err := x.genOpenAPI(inst.BuildInstance().ImportPath, inst)
 		if err != nil {
 			fatal(err, "Error generating OpenAPI schema")
@@ -351,6 +356,9 @@ func (x *builder) genCRD() {
 		for i.Next() {
 			key := i.Label()
 			schemas[key] = i.Value()
+
+			y, _ := yaml.Marshal(i.Value())
+			log.Println(string(y))
 		}
 	}
 
@@ -360,8 +368,10 @@ func (x *builder) genCRD() {
 	}
 
 	for c, v := range x.Config.Crd.CrdConfigs {
-
 		group := c[:strings.LastIndex(c, ".")]
+		if !strings.Contains(group, "extensions") {
+			continue
+		}
 		tp := crdToType[c]
 
 		versionSchemas := map[string]cue.Value{}
@@ -377,6 +387,8 @@ func (x *builder) genCRD() {
 			if !ok {
 				log.Fatalf("cannot find schema for %v", schemaName)
 			}
+			y, _ := yaml.Marshal(sc)
+			log.Println(string(y))
 			versionSchemas[version.Name] = sc
 		}
 
@@ -447,7 +459,7 @@ func (x *builder) genOpenAPI(name string, inst cue.Value) (cue.Value, error) {
 		return ""
 	}
 	// CRD schema does not allow $ref fields.
-	cfg.ExpandReferences = true
+	cfg.ExpandReferences = false
 	file, err := openapi.Generate(inst, cfg)
 	if err != nil {
 		return cue.Value{}, err
@@ -619,11 +631,16 @@ func processSchemas(v cue.Value) map[string]ast.Expr {
 	js := &apiext.JSONSchemaProps{}
 	js.Type = cueType(v)
 	matched := false
+
 	for _, d := range v.Doc() {
 		for _, line := range strings.Split(d.Text(), "\n") {
-			if !strings.Contains(line, "kubebuilder:validation") {
+			if !strings.Contains(line, "+kubebuilder:validation") && !strings.Contains(line, "+list") {
 				continue
 			}
+			//log.Printf("[%#v]", v)
+			//for _, v := range v.Doc() {
+			//	log.Println(v.Text())
+			//}
 			def := markerRegistry.Lookup(line, markers.DescribesType)
 			if def == nil {
 				log.Fatalf("unknown validation: %v", line)

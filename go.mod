@@ -2,7 +2,8 @@ module istio.io/tools
 
 go 1.18
 
-replace cuelang.org/go => github.com/howardjohn/cue v0.0.0-20230927143554-c355b0b6f460
+//replace cuelang.org/go => github.com/howardjohn/cue v0.0.0-20230927143554-c355b0b6f460
+replace cuelang.org/go => ../../cuelang.org/cue
 
 require (
 	cloud.google.com/go/spanner v1.47.0
